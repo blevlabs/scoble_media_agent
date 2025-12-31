@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 AI Predictions - Concept Network | ScobleMediaAgent</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+        }
+
+        header {
+            background: #1a1a1a;
+            color: #ffffff;
+            padding: 24px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 100px);
+        }
+
+        #network {
+            flex: 1;
+            border-right: 1px solid #e5e5e5;
+            height: 100%;
+            min-height: 600px;
+        }
+
+        #details {
+            width: 400px;
+            padding: 24px;
+            overflow-y: auto;
+            background: #f8f8f8;
+        }
+
+        #details h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+
+        #details h3 {
+            font-size: 14px;
+            margin-top: 20px;
+            margin-bottom: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .person-post {
+            background: #ffffff;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-left: 3px solid #0066cc;
+            border-radius: 2px;
+        }
+
+        .person-post .author {
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .person-post .text {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .person-post .meta {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .person-post a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        .person-post a:hover {
+            text-decoration: underline;
+        }
+
+        .legend {
+            position: absolute;
+            top: 120px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 16px;
+            border-radius: 4px;
+            border: 1px solid #e5e5e5;
+            font-size: 13px;
+        }
+
+        .legend-item {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .instructions {
+            padding: 16px;
+            background: #fff3cd;
+            border-left: 3px solid #ffc107;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            #details {
+                width: 100%;
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>2026 AI Predictions - Concept Network</h1>
+        <div class="subtitle">Interactive visualization of relationships, consensus, and divergence</div>
+    </header>
+
+    <div class="container">
+        <div id="network"></div>
+        <div id="details">
+            <div class="instructions">
+                <strong>How to use:</strong><br>
+                • Click nodes to see people and posts<br>
+                • Drag nodes to rearrange<br>
+                • Scroll to zoom<br>
+                • Arrows show causal relationships
+            </div>
+            <h2>Select a concept</h2>
+            <p style="color: #888; font-size: 14px;">Click any node in the network to see related people, posts, and insights.</p>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div style="font-weight: 600; margin-bottom: 12px;">Legend</div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #4A90E2;"></div>
+            <span>Newsmakers</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #7ED321;"></div>
+            <span>Leaders</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #F5A623;"></div>
+            <span>Investors</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #9013FE;"></div>
+            <span>Consensus</span>
+        </div>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e5e5; font-size: 12px; color: #666;">
+            Node size = Importance<br>
+            Solid arrows = Causes<br>
+            Dashed lines = Similar
+        </div>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing network...');
+
+            // Check if vis is loaded
+            if (typeof vis === 'undefined') {
+                console.error('vis-network library not loaded!');
+                document.getElementById('details').innerHTML = '<h2>Error</h2><p>vis-network library failed to load.</p>';
+                return;
+            }
+            console.log('vis-network library loaded successfully');
+
+            try {
+                // Network data
+                const nodes = new vis.DataSet([
+            // Consensus nodes (purple)
+            { id: 1, label: '2026\nTransformative', group: 'consensus', value: 40, title: 'Universal agreement: 2026 will be transformative' },
+            { id: 2, label: 'Vibe Coding\nRevolution', group: 'consensus', value: 35, title: 'All groups agree vibe coding is revolutionary' },
+            { id: 3, label: 'Dogged\nPursuits', group: 'consensus', value: 25, title: 'Cross-list pattern: persistence matters' },
+            
+            // Newsmakers nodes (blue)
+            { id: 4, label: 'Base Models\nReturning', group: 'newsmakers', value: 20, title: '@jxmnop prediction - unique to Newsmakers' },
+            { id: 5, label: 'Energy\nBottleneck', group: 'newsmakers', value: 30, title: '@SemiAnalysis_ - infrastructure constraint' },
+            { id: 6, label: 'AlphaGo\nReflection', group: 'newsmakers', value: 35, title: '@tszzl - no superhuman moment since' },
+            { id: 7, label: 'Acceleration\nDebate', group: 'newsmakers', value: 15, title: '@IntuitMachine - slowing down might kill us' },
+            { id: 8, label: 'Chip-Backed\nSecurities', group: 'newsmakers', value: 20, title: 'Oracle 2026 - new financing' },
+            { id: 9, label: 'AI\nInequality', group: 'newsmakers', value: 15, title: '@IntuitMachine - Jevons World' },
+            
+            // Leaders nodes (green)
+            { id: 10, label: 'AGI in\n2026', group: 'leaders', value: 25, title: '@jonas - last year as apex intelligence' },
+            { id: 11, label: 'Memory\nas Moat', group: 'leaders', value: 30, title: '@sunilkrao - only defensible moat' },
+            { id: 12, label: 'Companies\nWill Fail', group: 'leaders', value: 28, title: '@sunilkrao - most AI companies fail' },
+            { id: 13, label: 'AGI\nMobile', group: 'leaders', value: 18, title: '@NamanAGI_ - AI controlling apps' },
+            { id: 14, label: 'Coding\nRenaissance', group: 'leaders', value: 22, title: '@biwills - most fun in 17 years' },
+            
+            // Investors nodes (orange)
+            { id: 15, label: 'Vibe Coding\nStartups', group: 'investors', value: 20, title: '@TeksEdge - new wave of companies' },
+            { id: 16, label: 'American\nInnovation', group: 'investors', value: 18, title: '@dscheinm - builders must triumph' },
+        ]);
+
+        const edges = new vis.DataSet([
+            // Causal relationships (solid arrows)
+            { from: 5, to: 8, arrows: 'to', label: 'causes', dashes: false },  // Energy → Chip Securities
+            { from: 8, to: 12, arrows: 'to', label: 'causes', dashes: false }, // Chip Securities → Companies Fail
+            { from: 2, to: 15, arrows: 'to', label: 'causes', dashes: false }, // Vibe Coding → New Startups
+            { from: 15, to: 12, arrows: 'to', label: 'causes', dashes: false }, // New Startups → Most Fail
+            { from: 11, to: 12, arrows: 'to', label: 'causes', dashes: false }, // Memory Moat → Companies Fail
+            { from: 6, to: 10, arrows: 'to', label: 'implies', dashes: false }, // AlphaGo → AGI 2026
+            { from: 4, to: 1, arrows: 'to', label: 'enables', dashes: false }, // Base Models → Transformation
+            { from: 10, to: 1, arrows: 'to', label: 'validates', dashes: false }, // AGI → Transformation
+            
+            // Similarity relationships (dashed)
+            { from: 2, to: 14, arrows: 'none', dashes: true, label: 'similar' }, // Vibe Coding ↔ Renaissance
+            { from: 11, to: 12, arrows: 'none', dashes: true, label: 'related' }, // Memory Moat ↔ Fail
+            { from: 5, to: 12, arrows: 'none', dashes: true, label: 'related' }, // Energy ↔ Fail
+            
+            // Contradiction relationships (red dashed)
+            { from: 6, to: 10, arrows: 'none', dashes: true, color: {color: '#E74C3C'}, label: 'contradicts' }, // AlphaGo ↔ AGI 2026
+            { from: 12, to: 15, arrows: 'none', dashes: true, color: {color: '#E74C3C'}, label: 'paradox' }, // Fail ↔ New Startups
+        ]);
+
+        // Concept details with people and posts
+        const conceptDetails = {
+            1: {
+                title: '2026 Will Be Transformative',
+                description: 'Universal consensus across all groups that 2026 will bring rapid change.',
+                people: [
+                    {
+                        author: '@Dr_Singularity',
+                        text: '2026 is almost here. Things are about to start changing very fast.',
+                        link: 'https://x.com/Dr_Singularity/status/2006490553681326431',
+                        source: 'AI Newsmakers',
+                        engagement: '54 likes, 7 RTs'
+                    },
+                    {
+                        author: '@willyogo',
+                        text: 'Confident that 2026 is gonna be a big year for us all.',
+                        link: 'https://x.com/willyogo/status/2006492262977675657',
+                        source: 'AI Leaders #1'
+                    },
+                    {
+                        author: '@yuris',
+                        text: 'Ready for 2026',
+                        link: 'https://x.com/yuris/status/2006486783085916170',
+                        source: 'AI Investors'
+                    }
+                ]
+            },
+            2: {
+                title: 'Vibe Coding Revolution',
+                description: 'AI-assisted coding is transforming software development across all groups.',
+                people: [
+                    {
+                        author: '@emmalsalinas',
+                        text: 'running out of credits while vibecoding feels like being an octopus and having all of your legs chopped off at once... has ruined coding 4 me',
+                        link: 'https://x.com/emmalsalinas/status/2006485034921066957',
+                        source: 'AI Leaders #1'
+                    },
+                    {
+                        author: '@biwills',
+                        text: 'we are living in a coding renaissance. I have been writing code for over 17 years... this is the most fun I\'ve ever had building things.',
+                        link: 'https://x.com/biwills/status/2006484844671549547',
+                        source: 'AI Leaders #1'
+                    },
+                    {
+                        author: '@TeksEdge',
+                        text: 'It\'s likely we see lots more post vibe coding companies appear in 2026!!',
+                        link: 'https://x.com/TeksEdge/status/2006494450269511728',
+                        source: 'AI Investors'
+                    }
+                ]
+            },
+            3: {
+                title: 'Dogged Pursuits Trend',
+                description: 'Determined, persistent efforts will be the hottest trend of 2026.',
+                people: [
+                    {
+                        author: '@johncoogan',
+                        text: 'Calling it now, the hottest trend of 2026 will be dogged pursuits. Determined, persistent, and stubborn efforts to achieve things...',
+                        link: 'https://x.com/johncoogan/status/2006489663880704439',
+                        source: 'AI Newsmakers',
+                        engagement: '60 likes, 7 RTs'
+                    },
+                    {
+                        author: '@hnshah',
+                        text: 'RT @johncoogan: Calling it now, the hottest trend of 2026 will be dogged pursuits...',
+                        link: 'https://x.com/hnshah/status/2006489729777414226',
+                        source: 'AI Investors'
+                    }
+                ]
+            },
+            4: {
+                title: 'Base Models Returning',
+                description: 'Prediction that powerful pretrained models will return vs watered-down post-training.',
+                people: [
+                    {
+                        author: '@jxmnop',
+                        text: 'my 2026 prediction is the return of BASE MODELS. models created via pretraining are incredibly powerful... yet we only interact with the models that come out of post-training: watered-down corporatized',
+                        link: 'https://x.com/jxmnop/status/2006492392577245200',
+                        source: 'AI Newsmakers'
+                    }
+                ]
+            },
+            5: {
+                title: 'Energy Bottleneck',
+                description: 'Energy is the key constraint for AI infrastructure and GDP growth.',
+                people: [
+                    {
+                        author: '@SemiAnalysis_',
+                        text: 'Energy is the bottleneck for continued AI infrastructure & GDP growth in America. GB200/GB300 NVL72 (aka Jensen class Battleships)...',
+                        link: 'https://x.com/SemiAnalysis_/status/2006485516443935081',
+                        source: 'AI Newsmakers',
+                        engagement: '33 likes, 4 RTs'
+                    }
+                ]
+            },
+            6: {
+                title: 'AlphaGo Reflection',
+                description: 'No superhuman AI moment since AlphaGo 10 years ago, implying 2026 breakthrough coming.',
+                people: [
+                    {
+                        author: '@tszzl',
+                        text: 'unbelievable. it\'s been ten years since alphago. frankly there hasn\'t been a moment like that since',
+                        link: 'https://x.com/tszzl/status/2006485283106373889',
+                        source: 'AI Newsmakers',
+                        engagement: '102 likes, 19 replies'
+                    }
+                ]
+            },
+            7: {
+                title: 'Acceleration Debate',
+                description: 'Contrarian view that slowing down AI development might be more dangerous than accelerating.',
+                people: [
+                    {
+                        author: '@IntuitMachine',
+                        text: 'Why "Slowing Down" Might Actually Kill Us All. What if I told you that the most dangerous thing we can do with AI, biotech, and nuclear tech is to slow down?',
+                        link: 'https://x.com/IntuitMachine/status/2006484561170165902',
+                        source: 'AI Newsmakers'
+                    }
+                ]
+            },
+            8: {
+                title: 'Chip-Backed Securities',
+                description: 'Oracle will do first-of-its-kind chip-backed securities in 2026 to fund AI infrastructure.',
+                people: [
+                    {
+                        author: '@theinformation',
+                        text: 'Oracle will do the first-of-its-kind chip-backed, asset-backed security in 2026... to raise money against its existing chips so that it can buy more chips',
+                        link: 'https://x.com/theinformation/status/2006485652980801570',
+                        source: 'AI Newsmakers'
+                    }
+                ]
+            },
+            9: {
+                title: 'AI Inequality (Jevons World)',
+                description: 'AI pushing us into a world where inequality spirals forever.',
+                people: [
+                    {
+                        author: '@IntuitMachine',
+                        text: 'New research suggests AI is pushing us into a "Jevons World" where inequality doesn\'t just grow—it spirals forever.',
+                        link: 'https://x.com/IntuitMachine/status/2006494156454314348',
+                        source: 'AI Newsmakers'
+                    }
+                ]
+            },
+            10: {
+                title: 'AGI in 2026',
+                description: 'Bold prediction that 2026 is the last year humans are the apex intelligence.',
+                people: [
+                    {
+                        author: '@jonas',
+                        text: 'Welcome to the last year of being the apex intelligence',
+                        link: 'https://x.com/jonas/status/2006487842537836866',
+                        source: 'AI Leaders #1'
+                    }
+                ]
+            },
+            11: {
+                title: 'Memory as Moat',
+                description: 'Only memory/data creates defensible moats in AI. Everything else commoditizes.',
+                people: [
+                    {
+                        author: '@sunilkrao',
+                        text: 'Hot take: Most AI companies will fail. Not because AI doesn\'t work. Because they\'re building features, not compounding assets. Memory is the moat. Everything else gets commoditized.',
+                        link: 'https://x.com/sunilkrao/status/2006485841254785143',
+                        source: 'AI Leaders #1'
+                    },
+                    {
+                        author: '@tanayj',
+                        text: 'Notion crossed $600m ARR recently, of which reportedly half is coming from AI products.',
+                        link: 'https://x.com/tanayj/status/2006490548660744514',
+                        source: 'AI Newsmakers',
+                        note: 'Validation: Data moat working ($300M AI revenue)'
+                    }
+                ]
+            },
+            12: {
+                title: 'Most AI\nCompanies Fail',
+                description: 'Prediction that most AI companies will fail due to lack of defensible moats.',
+                people: [
+                    {
+                        author: '@sunilkrao',
+                        text: 'Most AI companies will fail. Not because AI doesn\'t work. Because they\'re building features, not compounding assets.',
+                        link: 'https://x.com/sunilkrao/status/2006485841254785143',
+                        source: 'AI Leaders #1'
+                    }
+                ]
+            },
+            13: {
+                title: 'AGI Mobile\nLaunch',
+                description: 'AI agent that operates directly inside mobile apps through UI.',
+                people: [
+                    {
+                        author: '@NamanAGI_',
+                        text: 'For years, we\'ve been talking to software. The next step is letting software act on our behalf. AGI Mobile is an AI that understands intent and operates directly inside mobile apps',
+                        link: 'https://x.com/NamanAGI_/status/2006487147973611725',
+                        source: 'AI Leaders #1'
+                    }
+                ]
+            },
+            14: {
+                title: 'Coding\nRenaissance',
+                description: 'Current era described as most fun building in 17 years.',
+                people: [
+                    {
+                        author: '@biwills',
+                        text: 'we are living in a coding renaissance. I have been writing code for over 17 years, across numerous domains and languages, and this is the most fun I\'ve ever had building things.',
+                        link: 'https://x.com/biwills/status/2006484844671549547',
+                        source: 'AI Leaders #1'
+                    }
+                ]
+            },
+            15: {
+                title: 'Vibe Coding\nStartups',
+                description: 'Wave of new AI coding companies expected in 2026.',
+                people: [
+                    {
+                        author: '@TeksEdge',
+                        text: 'It\'s likely we see lots more post vibe coding companies appear in 2026!!',
+                        link: 'https://x.com/TeksEdge/status/2006494450269511728',
+                        source: 'AI Investors'
+                    }
+                ]
+            },
+            16: {
+                title: 'American Innovation',
+                description: 'Hope that builders triumph over bureaucracy in 2026.',
+                people: [
+                    {
+                        author: '@dscheinm',
+                        text: 'My hope for 2026 is that those who seek to build America will triumph over those who seek to weaken it.',
+                        link: 'https://x.com/dscheinm/status/2006486441258529017',
+                        source: 'AI Investors'
+                    }
+                ]
+            }
+        };
+
+        // Network options
+        const options = {
+            nodes: {
+                shape: 'dot',
+                scaling: {
+                    min: 20,
+                    max: 60
+                },
+                font: {
+                    size: 14,
+                    face: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto',
+                    color: '#1a1a1a',
+                    multi: true
+                },
+                borderWidth: 2,
+                shadow: true
+            },
+            edges: {
+                width: 2,
+                color: {color: '#848484', highlight: '#1a1a1a'},
+                smooth: {
+                    type: 'continuous',
+                    roundness: 0.5
+                },
+                font: {
+                    size: 11,
+                    color: '#666',
+                    align: 'middle'
+                }
+            },
+            groups: {
+                consensus: {
+                    color: {background: '#9013FE', border: '#7010CC', highlight: {background: '#A020FF', border: '#8015DD'}}
+                },
+                newsmakers: {
+                    color: {background: '#4A90E2', border: '#357ABD', highlight: {background: '#5BA0F2', border: '#458ACE'}}
+                },
+                leaders: {
+                    color: {background: '#7ED321', border: '#6AB81A', highlight: {background: '#8EE331', border: '#7AC82A'}}
+                },
+                investors: {
+                    color: {background: '#F5A623', border: '#D68910', highlight: {background: '#FFB633', border: '#E69720'}}
+                }
+            },
+            physics: {
+                stabilization: {
+                    iterations: 200
+                },
+                barnesHut: {
+                    gravitationalConstant: -8000,
+                    springConstant: 0.04,
+                    springLength: 150
+                }
+            },
+            interaction: {
+                hover: true,
+                tooltipDelay: 200,
+                navigationButtons: true,
+                keyboard: true
+            }
+        };
+
+        // Create network
+        const container = document.getElementById('network');
+        console.log('Container found:', container !== null);
+        console.log('Nodes count:', nodes.length);
+        console.log('Edges count:', edges.length);
+
+        const data = { nodes: nodes, edges: edges };
+        console.log('Creating network with data:', data);
+
+        const network = new vis.Network(container, data, options);
+        console.log('Network created:', network);
+
+        // Handle node clicks
+        network.on('click', function(params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                const details = conceptDetails[nodeId];
+                
+                if (details) {
+                    let html = `<h2>${details.title}</h2>`;
+                    html += `<p style="color: #666; font-size: 14px; margin-bottom: 20px;">${details.description}</p>`;
+                    html += `<h3>People & Posts</h3>`;
+                    
+                    details.people.forEach(person => {
+                        html += `<div class="person-post">`;
+                        html += `<div class="author">${person.author}</div>`;
+                        html += `<div class="text">${person.text}</div>`;
+                        html += `<div class="meta">`;
+                        html += `<a href="${person.link}" target="_blank">View post ↗</a> • `;
+                        html += `<span style="font-style: italic;">${person.source}</span>`;
+                        if (person.engagement) {
+                            html += ` • ${person.engagement}`;
+                        }
+                        if (person.note) {
+                            html += `<br><span style="color: #0066cc;">${person.note}</span>`;
+                        }
+                        html += `</div></div>`;
+                    });
+                    
+                    document.getElementById('details').innerHTML = html;
+                }
+            }
+        });
+
+        // Initial message
+        document.getElementById('details').innerHTML = `
+            <div class="instructions">
+                <strong>How to use:</strong><br>
+                • Click nodes to see people and posts<br>
+                • Drag nodes to rearrange<br>
+                • Scroll to zoom<br>
+                • Arrows show causal relationships
+            </div>
+            <h2>2026 AI Predictions Network</h2>
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                This interactive network shows how 2026 AI predictions relate to each other.
+                <br><br>
+                <strong>Node colors:</strong><br>
+                • Purple = Consensus (all groups agree)<br>
+                • Blue = AI Newsmakers predictions<br>
+                • Green = AI Leaders predictions<br>
+                • Orange = AI Investors predictions<br>
+                <br>
+                <strong>Node size</strong> = Importance (engagement + cross-list frequency)<br>
+                <br>
+                <strong>Edge types:</strong><br>
+                • Solid arrows = Causal relationships<br>
+                • Dashed lines = Similarity/related<br>
+                • Red dashed = Contradictions<br>
+                <br>
+                <strong>Click any node</strong> to see the people who made these predictions and their original posts.
+            </p>
+        `;
+
+                console.log('Network initialization complete');
+            } catch (error) {
+                console.error('Error initializing network:', error);
+                document.getElementById('details').innerHTML = '<h2>Error</h2><p>Failed to initialize network. Check console for details.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
