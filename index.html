@@ -333,7 +333,7 @@
                     {
                         author: '@jxmnop',
                         text: 'my 2026 prediction is the return of BASE MODELS. models created via pretraining are incredibly powerful... yet we only interact with the models that come out of post-training: watered-down corporatized',
-                        link: 'https://x.com/jxmnop/status/2006492392577245200',
+                        link: '#',
                         source: 'AI Newsmakers'
                     }
                 ]
@@ -583,7 +583,9 @@
                         html += `<div class="author">${person.author}</div>`;
                         html += `<div class="text">${person.text}</div>`;
                         html += `<div class="meta">`;
-                        html += `<a href="${person.link}" target="_blank">View post ↗</a> • `;
+                        if (person.link && person.link !== '#') {
+                            html += `<a href="${person.link}" target="_blank">View post ↗</a> • `;
+                        }
                         html += `<span style="font-style: italic;">${person.source}</span>`;
                         if (person.engagement) {
                             html += ` • ${person.engagement}`;
